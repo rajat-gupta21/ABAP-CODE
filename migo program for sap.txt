@@ -1,0 +1,435 @@
+  *&---------------------------------------------------------------------*
+*& Report ZMIGO_REPORT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zmigo_report.
+"""""""""""""""TABLE DECLARTION""""""""
+TABLES: zmigo_h , zmigo_i.
+
+TYPE-POOLS : slis.
+
+TYPES: BEGIN OF ty_zmigo_h,
+
+         po_number     TYPE  ebeln,
+         gate_entry_no TYPE  zgate_e,
+         doc_date      TYPE  bldat,
+         pos_date      TYPE  budat,
+         del_note      TYPE  lfsnr1,
+         bill_of_land  TYPE  frbnr1,
+         gr_slipno     TYPE  xabln,
+         head_txt      TYPE  bktxt,
+         vendor_code   TYPE  lifnr,
+         vendor_name   TYPE  name1,
+         vendor_add    TYPE  adrnr,
+         vendor_pan    TYPE  zpan,
+         vendor_gstin  TYPE  stcd3,
+         bill_of_entry TYPE  fkdat,
+         quantity      TYPE  menge_d,
+         ratio         TYPE  zratio,
+       END OF ty_zmigo_h.
+
+TYPES: BEGIN OF ty_zmigo_i,
+
+         gtpno TYPE zde_gtpno,
+         ebeln TYPE ebeln,
+         matnr TYPE matnr,
+         maktx TYPE char200,
+         ebelp TYPE ebelp,
+         menge TYPE bstmg,
+         werks TYPE werks_d,
+         meins TYPE meins,
+         lgort TYPE lgort_d,
+         charg TYPE charg_d,
+       END OF ty_zmigo_i.
+
+TYPES: BEGIN OF st_final,
+
+         po_number     TYPE  ebeln,
+         gate_entry_no TYPE  zgate_e,
+         doc_date      TYPE  bldat,
+         pos_date      TYPE  budat,
+         del_note      TYPE  lfsnr1,
+         bill_of_land  TYPE  frbnr1,
+         gr_slipno     TYPE  xabln,
+         head_txt      TYPE  bktxt,
+         vendor_code   TYPE  lifnr,
+         vendor_name   TYPE  name1,
+         vendor_add    TYPE  adrnr,
+         vendor_pan    TYPE  zpan,
+         vendor_gstin  TYPE  stcd3,
+         bill_of_entry TYPE  fkdat,
+         quantity      TYPE  menge_d,
+         ratio         TYPE  zratio,
+         gtpno         TYPE zde_gtpno,
+         ebeln         TYPE ebeln,
+         matnr         TYPE matnr,
+         maktx         TYPE char200,
+         ebelp         TYPE ebelp,
+         menge         TYPE bstmg,
+         werks         TYPE werks_d,
+         meins         TYPE meins,
+         lgort         TYPE lgort_d,
+         charg         TYPE charg_d,
+       END OF st_final.
+
+DATA: it_migo_h TYPE TABLE OF ty_zmigo_h,
+      wa_migo_h TYPE ty_zmigo_h.
+
+DATA: it_migo_i TYPE TABLE OF ty_zmigo_i,
+      wa_migo_i TYPE ty_zmigo_i,
+      wa_layout TYPE slis_layout_alv.
+
+DATA: it_fcat TYPE slis_t_fieldcat_alv,
+      wa_fcat TYPE slis_fieldcat_alv.
+
+DATA: it_final TYPE TABLE OF st_final,
+      wa_final TYPE st_final.
+
+""""""""SELECTION SCRREN""""""""""
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001.
+
+  SELECT-OPTIONS: p_gtpno FOR zmigo_h-GATE_ENTRY_NO,
+                  p_po_No FOR zmigo_h-po_number,
+                  p_doc_d FOR zmigo_h-doc_date.
+
+SELECTION-SCREEN END OF BLOCK b1.
+
+""""""FETCHING THE DATA""""""""
+
+START-OF-SELECTION.
+
+  SELECT  PO_NUMBER
+          GATE_ENTRY_NO
+          DOC_DATE
+          POS_DATE
+          DEL_NOTE
+          BILL_OF_LAND
+          GR_SLIPNO
+          HEAD_TXT
+          VENDOR_CODE
+          VENDOR_NAME
+          VENDOR_ADD
+          VENDOR_PAN
+          VENDOR_GSTIN
+*          STREET
+*          HOUSE_NO
+*          STREET_NO
+*          CITY
+*          POSTAL_CODE
+*          REGION_CODE
+*          STATE
+*          COUNTRY
+          BILL_OF_ENTRY
+          QUANTITY
+          RATIO
+*          CURRENCY
+*          EXHANGE_RATE
+     FROM zmigo_h
+    INTO CORRESPONDING FIELDS OF TABLE it_migo_h
+    WHERE GATE_ENTRY_NO IN p_gtpno.
+*    AND   PO_NUMBER = p_po_no
+*    AND   doc_date = p_doc_d.
+
+
+  IF it_migo_h IS not INITIAL.
+
+
+    SELECT  GTPNO
+            EBELN
+            MATNR
+            MAKTX
+            EBELP
+            MENGE
+            WERKS
+            MEINS
+            LGORT
+            CHARG FROM zmigo_i
+    INTO CORRESPONDING FIELDS OF TABLE it_migo_i
+    FOR ALL ENTRIES IN it_migo_h
+      WHERE GTPNO = it_migo_h-gate_entry_no.
+
+LOOP AT it_migo_h INTO wa_migo_h.
+
+    wa_final-po_number     = zmigo_h-po_number.
+    wa_final-gate_entry_no = zmigo_h-gate_entry_no.
+    wa_final-doc_date      = zmigo_h-doc_date.
+    wa_final-pos_date      = zmigo_h-pos_date.
+    wa_final-del_note      = zmigo_h-del_note.
+    wa_final-bill_of_land  = zmigo_h-bill_of_land.
+    wa_final-gr_slipno     = zmigo_h-gr_slipno.
+    wa_final-head_txt      = zmigo_h-head_txt.
+    wa_final-vendor_code   = zmigo_h-vendor_code.
+    wa_final-vendor_name   = zmigo_h-vendor_name.
+    wa_final-vendor_add    = zmigo_h-vendor_add.
+    wa_final-vendor_pan    = zmigo_h-vendor_pan.
+    wa_final-vendor_gstin  = zmigo_h-vendor_gstin.
+    wa_final-bill_of_entry  = zmigo_h-bill_of_entry.
+    wa_final-quantity       = zmigo_h-quantity.
+    wa_final-ratio        = zmigo_h-ratio.
+
+    READ TABLE it_migo_i INTO wa_migo_i WITH KEY gtpno = wa_migo_i-GTPNO.
+    IF sy-subrc = 0.
+
+    wa_final-gtpno  = zmigo_i-gtpno.
+    wa_final-ebeln  = zmigo_i-ebeln.
+    wa_final-matnr  = zmigo_i-matnr.
+    wa_final-maktx  = zmigo_i-maktx.
+    wa_final-ebelp  = zmigo_i-ebelp.
+    wa_final-menge  = zmigo_i-menge.
+    wa_final-werks  = zmigo_i-werks.
+    wa_final-meins  = zmigo_i-meins.
+    wa_final-lgort  = zmigo_i-lgort.
+    wa_final-charg  = zmigo_i-charg.
+
+    endif.
+
+     ENDLOOP.
+
+  """""""FIELDCAT FOR ZMIGO_H"""""""""""
+
+  wa_fcat-col_pos = 1.
+  wa_fcat-fieldname = 'PO_NUMBER'.
+  wa_fcat-seltext_m = 'Purchasing Document Number'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 2.
+  wa_fcat-fieldname = 'GATE_ENTRY_NO'.
+  wa_fcat-seltext_m = 'Gate Entry No'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 3.
+  wa_fcat-fieldname = 'DOC_DATE'.
+  wa_fcat-seltext_m = 'Document Date in Document'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 4.
+  wa_fcat-fieldname = 'POS_DATE'.
+  wa_fcat-seltext_m = 'Posting Date in the Document'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 4.
+  wa_fcat-fieldname = 'DEL_NOTE'.
+  wa_fcat-seltext_m = 'Number of External Delivery Note'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 5.
+  wa_fcat-fieldname = 'BILL_OF_LAND'.
+  wa_fcat-seltext_m = 'Number of Bill of Lading at Time of Goods Receipt'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 6.
+  wa_fcat-fieldname = 'GR_SLIPNO'.
+  wa_fcat-seltext_m = 'Goods Receipt/Issue Slip Number'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = 7.
+  wa_fcat-fieldname = 'HEAD_TXT'.
+  wa_fcat-seltext_m = 'Document Header Text'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 8.
+  wa_fcat-fieldname = 'VENDOR_CODE'.
+  wa_fcat-seltext_m = 'Account Number of Vendor or Creditor'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 9.
+  wa_fcat-fieldname = 'VENDOR_NAME'.
+  wa_fcat-seltext_m = 'Name'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 10.
+  wa_fcat-fieldname = 'VENDOR_ADD'.
+  wa_fcat-seltext_m = 'Address'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 11.
+  wa_fcat-fieldname = 'VENDOR_PAN'.
+  wa_fcat-seltext_m = 'PAN NUMBER'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 12.
+  wa_fcat-fieldname = 'VENDOR_GSTIN'.
+  wa_fcat-seltext_m = 'Tax Number 3'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 13.
+  wa_fcat-fieldname = 'BILL_OF_ENTRY'.
+  wa_fcat-seltext_m = 'Billing Date'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 14.
+  wa_fcat-fieldname = 'QUANTITY'.
+  wa_fcat-seltext_m = 'Quantity'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 15.
+  wa_fcat-fieldname = 'RATIO'.
+  wa_fcat-seltext_m = 'Ratio'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  """""FILEDCAT FOR ZMIGO_I"""""""""
+
+
+  wa_fcat-col_pos = 1.
+  wa_fcat-fieldname = 'GTPNO'.
+  wa_fcat-seltext_m = 'Gate Pass Number'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 2.
+  wa_fcat-fieldname = 'EBELN'.
+  wa_fcat-seltext_m = 'Purchasing Document Number'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 3.
+  wa_fcat-fieldname = 'MATNR'.
+  wa_fcat-seltext_m = 'Material Number'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 4.
+  wa_fcat-fieldname = 'MAKTX'.
+  wa_fcat-seltext_m = 'Material Description'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = 5.
+  wa_fcat-fieldname = 'EBELP'.
+  wa_fcat-seltext_m = 'Item Number of Purchasing Document'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = 6.
+  wa_fcat-fieldname = 'MENGE'.
+  wa_fcat-seltext_m = 'Purchase Order Quantity'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 7.
+  wa_fcat-fieldname = 'WERKS'.
+  wa_fcat-seltext_m = 'Plant'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 8.
+  wa_fcat-fieldname = 'MEINS'.
+  wa_fcat-seltext_m = 'Base Unit of Measure'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 9.
+  wa_fcat-fieldname = 'LGORT'.
+  wa_fcat-seltext_m = 'Storage location'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_fcat-col_pos = 10.
+  wa_fcat-fieldname = 'CHARG'.
+  wa_fcat-seltext_m = 'Batch Number'.
+  wa_fcat-tabname   = 'IT_FINAL'.
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+  wa_layout-colwidth_optimize = 'X'.
+
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+    EXPORTING
+*     I_INTERFACE_CHECK  = ' '
+*     I_BYPASSING_BUFFER = ' '
+*     I_BUFFER_ACTIVE    = ' '
+      i_callback_program = sy-repid
+*     I_CALLBACK_PF_STATUS_SET          = ' '
+*     I_CALLBACK_USER_COMMAND           = ' '
+*     I_CALLBACK_TOP_OF_PAGE            = ' '
+*     I_CALLBACK_HTML_TOP_OF_PAGE       = ' '
+*     I_CALLBACK_HTML_END_OF_LIST       = ' '
+*     I_STRUCTURE_NAME   =
+*     I_BACKGROUND_ID    = ' '
+*     I_GRID_TITLE       =
+*     I_GRID_SETTINGS    =
+      is_layout          = wa_layout
+      it_fieldcat        = it_fcat
+*     IT_EXCLUDING       =
+*     IT_SPECIAL_GROUPS  =
+*     IT_SORT            =
+*     IT_FILTER          =
+*     IS_SEL_HIDE        =
+*     I_DEFAULT          = 'X'
+*     I_SAVE             = ' '
+*     IS_VARIANT         =
+*     IT_EVENTS          =
+*     IT_EVENT_EXIT      =
+*     IS_PRINT           =
+*     IS_REPREP_ID       =
+*     I_SCREEN_START_COLUMN             = 0
+*     I_SCREEN_START_LINE               = 0
+*     I_SCREEN_END_COLUMN               = 0
+*     I_SCREEN_END_LINE  = 0
+*     I_HTML_HEIGHT_TOP  = 0
+*     I_HTML_HEIGHT_END  = 0
+*     IT_ALV_GRAPHICS    =
+*     IT_HYPERLINK       =
+*     IT_ADD_FIELDCAT    =
+*     IT_EXCEPT_QINFO    =
+*     IR_SALV_FULLSCREEN_ADAPTER        =
+*     O_PREVIOUS_SRAL_HANDLER           =
+* IMPORTING
+*     E_EXIT_CAUSED_BY_CALLER           =
+*     ES_EXIT_CAUSED_BY_USER            =
+    TABLES
+      t_outtab           = it_final
+    EXCEPTIONS
+      program_error      = 1
+      OTHERS             = 2.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+  endif.
